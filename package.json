@@ -1,0 +1,26 @@
+{
+  "name": "rpg-terminal",
+  "version": "1.0.0",
+  "description": "Juego RPG por terminal con combates por turnos",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && node copy-public.mjs",
+    "start": "node dist/terminal/index.js",
+    "dev": "tsc && node copy-public.mjs && node dist/terminal/index.js",
+    "web": "node dist/web/server.js",
+    "dev:web": "tsc && node copy-public.mjs && node dist/web/server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "inquirer": "^12.4.2",
+    "picocolors": "^1.1.1",
+    "ws": "^8.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^22.13.0",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.7.3"
+  }
+}

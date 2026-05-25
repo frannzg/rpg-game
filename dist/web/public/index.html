@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚔ Ragnarok Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;700;900&family=Courier+Prime&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="particles"></div>
+  <div id="app">
+    <header>
+      <h1><span class="title-icon">⚔</span> RAGNAROK <span class="title-icon">⚔</span></h1>
+      <p id="subtitle">— Batallas por turnos —</p>
+      <div class="header-ornament"></div>
+    </header>
+
+    <main id="screen">
+      <!-- Main Menu -->
+      <div id="menu">
+        <div class="menu-ornament">✦ ✦ ✦</div>
+        <h2>FORJA TU DESTINO</h2>
+        <button class="btn btn-hero" data-action="campaign">
+          <span class="btn-icon">🌍</span>
+          <span class="btn-text">Campaña (20 niveles)</span>
+          <span class="btn-sub">Una aventura épica</span>
+        </button>
+        <button class="btn btn-hero" data-action="pve">
+          <span class="btn-icon">⚔</span>
+          <span class="btn-text">Jugador vs CPU</span>
+          <span class="btn-sub">Enfréntate a la IA</span>
+        </button>
+        <button class="btn btn-hero" data-action="pvp">
+          <span class="btn-icon">👥</span>
+          <span class="btn-text">Duelo de Campeones</span>
+          <span class="btn-sub">Dos jugadores, un destino</span>
+        </button>
+        <div class="menu-ornament">✦ ✦ ✦</div>
+      </div>
+
+      <!-- Character Select (PvE) -->
+      <div id="character-select" class="hidden">
+        <div class="screen-header">
+          <span class="back-arrow" data-back="menu">←</span>
+          <h2 id="select-title">SELECCIONA TU CAMPEÓN</h2>
+        </div>
+        <div id="char-grid"></div>
+      </div>
+
+      <!-- Enemy Select (PvE) -->
+      <div id="enemy-select" class="hidden">
+        <div class="screen-header">
+          <span class="back-arrow" data-back="character-select">←</span>
+          <h2>FORJA TUS ENEMIGOS</h2>
+        </div>
+        <div id="enemy-count-select">
+          <label>¿Contra cuántos enemigos?</label>
+          <div class="btn-group">
+            <button class="btn btn-count" data-count="1">Ⅰ</button>
+            <button class="btn btn-count" data-count="2">Ⅱ</button>
+            <button class="btn btn-count" data-count="3">Ⅲ</button>
+          </div>
+        </div>
+        <div id="enemy-picks" class="hidden">
+          <div id="enemy-grid"></div>
+          <button class="btn btn-primary btn-lg" id="start-battle">⚔ ¡INICIAR BATALLA!</button>
+        </div>
+      </div>
+
+      <!-- PvP Select -->
+      <div id="pvp-select" class="hidden">
+        <div class="screen-header">
+          <span class="back-arrow" data-back="menu">←</span>
+          <h2>SELECCIONEN SUS CAMPEONES</h2>
+        </div>
+        <div class="player-label p1-label">👤 JUGADOR 1</div>
+        <div id="p1-grid" class="char-picker"></div>
+        <div class="player-label p2-label">👤 JUGADOR 2</div>
+        <div id="p2-grid" class="char-picker"></div>
+        <button class="btn btn-primary btn-lg hidden" id="start-pvp">⚔ ¡DUELO!</button>
+      </div>
+
+      <!-- Campaign Select -->
+      <div id="campaign-select" class="hidden">
+        <div class="screen-header">
+          <span class="back-arrow" data-back="menu">←</span>
+          <h2>Campaña</h2>
+        </div>
+        <div id="campaign-options">
+          <button class="btn btn-hero" id="campaign-new">
+            <span class="btn-icon">🆕</span>
+            <span class="btn-text">Nueva partida</span>
+            <span class="btn-sub">Comienza tu aventura</span>
+          </button>
+          <button class="btn btn-hero" id="campaign-load">
+            <span class="btn-icon">📂</span>
+            <span class="btn-text">Cargar partida</span>
+            <span class="btn-sub" id="campaign-load-sub">No hay partida guardada</span>
+          </button>
+          <button class="btn btn-hero" id="campaign-delete" style="opacity:0.5">
+            <span class="btn-icon">🗑️</span>
+            <span class="btn-text">Borrar partida</span>
+            <span class="btn-sub">Elimina la partida guardada</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Party Creation -->
+      <div id="party-creation" class="hidden">
+        <div class="screen-header">
+          <span class="back-arrow" data-back="campaign-select">←</span>
+          <h2>SELECCIONA TU GRUPO</h2>
+        </div>
+        <div id="party-slots">
+          <div class="party-slot" data-slot="0">
+            <h3>PERSONAJE 1</h3>
+            <div class="party-pick-grid"></div>
+            <input class="party-name-input" placeholder="Nombre..." maxlength="16">
+          </div>
+          <div class="party-slot" data-slot="1">
+            <h3>PERSONAJE 2</h3>
+            <div class="party-pick-grid"></div>
+            <input class="party-name-input" placeholder="Nombre..." maxlength="16">
+          </div>
+          <div class="party-slot" data-slot="2">
+            <h3>PERSONAJE 3</h3>
+            <div class="party-pick-grid"></div>
+            <input class="party-name-input" placeholder="Nombre..." maxlength="16">
+          </div>
+        </div>
+        <div id="difficulty-select">
+          <label>Dificultad:</label>
+          <div class="btn-group">
+            <button class="btn btn-sm btn-difficulty active" data-diff="normal">⚔ Normal</button>
+            <button class="btn btn-sm btn-difficulty" data-diff="hard">🔥 Difícil</button>
+            <button class="btn btn-sm btn-difficulty" data-diff="nightmare">💀 Pesadilla</button>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-lg hidden" id="start-campaign">🌍 ¡INICIAR AVENTURA!</button>
+      </div>
+
+      <!-- Campaign Hub -->
+      <div id="campaign-hub" class="hidden">
+        <div class="screen-header">
+          <span class="back-arrow" data-back="menu">←</span>
+          <h2>Campaña</h2>
+        </div>
+        <div id="hub-level-display"></div>
+        <div id="hub-gold"></div>
+        <div id="hub-party"></div>
+        <div id="hub-actions">
+          <button class="btn btn-hero" id="hub-battle">
+            <span class="btn-icon">⚔</span>
+            <span class="btn-text">Siguiente batalla</span>
+            <span class="btn-sub"></span>
+          </button>
+          <button class="btn btn-hero" id="hub-shop">
+            <span class="btn-icon">🏪</span>
+            <span class="btn-text">Tienda</span>
+            <span class="btn-sub">Compra y vende equipo</span>
+          </button>
+          <button class="btn btn-hero" id="hub-save">
+            <span class="btn-icon">💾</span>
+            <span class="btn-text">Guardar y salir</span>
+            <span class="btn-sub">Vuelve al menú</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Shop -->
+      <div id="shop" class="hidden">
+        <div class="screen-header">
+          <span class="back-arrow" data-back="campaign-hub">←</span>
+          <h2>🏪 TIENDA</h2>
+        </div>
+        <div id="shop-gold"></div>
+        <div id="shop-buy-section">
+          <h3>COMPRAR</h3>
+          <div id="shop-buy-grid"></div>
+        </div>
+        <div id="shop-sell-section">
+          <h3>VENDER</h3>
+          <div id="shop-sell-grid"></div>
+        </div>
+      </div>
+
+      <!-- Talent Select -->
+      <div id="talent-select" class="hidden">
+        <div class="screen-header">
+          <h2>⭐ NUEVO TALENTO</h2>
+        </div>
+        <div id="talent-info"></div>
+        <div id="talent-choices"></div>
+      </div>
+
+      <!-- Battle Arena -->
+      <div id="battle" class="hidden">
+        <div id="battle-header">
+          <div class="battle-ornament left">⚔</div>
+          <div id="round-display">RONDA Ⅰ</div>
+          <div class="battle-ornament right">⚔</div>
+        </div>
+        <div id="battlefield">
+          <div id="allies" class="team team-ally"></div>
+          <div id="vs-divider">
+            <div class="vs-circle">VS</div>
+          </div>
+          <div id="enemies" class="team team-enemy"></div>
+        </div>
+        <div id="log"></div>
+        <div id="action-bar" class="hidden">
+          <button class="btn btn-action attack" data-action="attack"><span class="action-icon">⚔</span> Atacar</button>
+          <button class="btn btn-action ability" data-action="ability"><span class="action-icon">✨</span> Habilidad</button>
+          <button class="btn btn-action item" data-action="item"><span class="action-icon">🧪</span> Objeto</button>
+          <button class="btn btn-action defend" data-action="defend"><span class="action-icon">🛡</span> Defender</button>
+        </div>
+        <div id="submenu" class="hidden"></div>
+      </div>
+
+      <!-- Result Screen -->
+      <div id="result" class="hidden">
+        <div id="result-glow"></div>
+        <h2 id="result-title"></h2>
+        <div id="result-details"></div>
+        <button class="btn btn-primary btn-lg" id="back-to-menu">← Volver al Portal</button>
+        <button class="btn btn-primary btn-lg hidden" id="back-to-hub">← Continuar campaña</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
