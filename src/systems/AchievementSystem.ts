@@ -1,4 +1,4 @@
-import { Achievement, GameStats } from '../types/index.js'
+import { Achievement, GameStats, SavedCharacter } from '../types/index.js'
 
 export const ACHIEVEMENT_LIST: Record<string, Achievement> = {
   first_blood: { id: 'first_blood', name: 'Primera Sangre', description: 'Gana tu primera batalla de campaña' },
@@ -14,15 +14,34 @@ export const ACHIEVEMENT_LIST: Record<string, Achievement> = {
 }
 
 export class AchievementSystem {
-  static checkAll(stats: GameStats, currentLevel: number, difficultiesCompleted: string[]): string[] {
+  static checkAll(
+    stats: GameStats,
+    unlocked: string[],
+    currentLevel: number,
+    difficulty: string,
+    party: SavedCharacter[],
+  ): string[] {
     const newAchievements: string[] = []
-    return newAchievements
-  }
 
-  static check(id: string, unlocked: string[], stats: GameStats): boolean {
-    if (unlocked.includes(id)) return false
-    const achievement = ACHIEVEMENT_LIST[id]
-    if (!achievement) return false
-    return true
+    const checks: Array<{ id: string; condition: () => boolean }> = [
+      { id: 'first_blood', condition: () => stats.battlesWon >= 1 },
+      { id: 'boss_slayer', condition: () => stats.bossesDefeated >= 1 },
+      { id: 'collector', condition: () => party.some(c => c.inventory.length >= 10) },
+      { id: 'max_level', condition: () => party.some(c => c.level >= 20) },
+      { id: 'nightmare', condition: () => difficulty === 'nightmare' && currentLevel >= 20 },
+      { id: 'crit_master', condition: () => stats.criticalHits >= 100 },
+      { id: 'no_death', condition: () => stats.battlesLost === 0 && currentLevel >= 20 },
+      { id: 'damage_dealer', condition: () => stats.totalDamageDealt >= 10000 },
+      { id: 'healer', condition: () => stats.totalHealed >= 5000 },
+      { id: 'survivor', condition: () => currentLevel >= 20 },
+    ]
+
+    for (const { id, condition } of checks) {
+      if (!unlocked.includes(id) && condition()) {
+        newAchievements.push(id)
+      }
+    }
+
+    return newAchievements
   }
 }

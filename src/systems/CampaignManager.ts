@@ -6,6 +6,7 @@ import { SaveManager } from './SaveManager.js'
 import { ShopSystem, ShopItem } from './ShopSystem.js'
 import { generateLoot } from './LootSystem.js'
 import { distributeXp } from './LevelSystem.js'
+import { AchievementSystem } from './AchievementSystem.js'
 import { campaignLevels, getCampaignLevel } from '../data/campaign.js'
 import { itemDatabase, getItemsForClass } from '../data/items.js'
 import { talents, TALENT_POOLS } from '../data/talents.js'
@@ -21,6 +22,7 @@ export interface CampaignState {
   difficulty: Difficulty
   stats: GameStats
   isComplete: boolean
+  achievements: string[]
   justUnlockedAchievements: string[]
   partyTalents: Map<string, string[]>  // templateId -> talentIds[]
 }
@@ -37,6 +39,7 @@ export class CampaignManager {
       difficulty: Difficulty.NORMAL,
       stats: { battlesWon: 0, battlesLost: 0, totalDamageDealt: 0, totalDamageTaken: 0, totalHealed: 0, criticalHits: 0, enemiesDefeated: 0, bossesDefeated: 0 },
       isComplete: false,
+      achievements: [],
       justUnlockedAchievements: [],
       partyTalents: new Map(),
     }
@@ -49,6 +52,7 @@ export class CampaignManager {
     cm.state.gold = save.gold
     cm.state.difficulty = save.difficulty
     cm.state.stats = save.stats
+    cm.state.achievements = save.achievements || []
     cm.state.partyTalents = new Map()
 
     cm.state.party = save.party.map((sc, idx) => {
@@ -208,6 +212,41 @@ export class CampaignManager {
     char.talents = [...existing, talentId]
   }
 
+  checkAchievements(): void {
+    const party = this.state.party.map(c => ({
+      templateId: c.id,
+      customName: c.name,
+      className: c.className,
+      level: c.level,
+      xp: c.xp,
+      xpToNext: c.xpToNext,
+      baseStats: { ...c.baseStats },
+      hp: c.currentStats.hp,
+      maxHp: c.currentStats.maxHp,
+      mp: c.currentStats.mp,
+      maxMp: c.currentStats.maxMp,
+      inventory: c.inventory.map(i => i.id),
+      equippedWeapon: c.equippedWeapon?.id || null,
+      equippedArmor: c.equippedArmor?.id || null,
+      talents: c.talents || [],
+    }))
+
+    const newAchievements = AchievementSystem.checkAll(
+      this.state.stats,
+      this.state.achievements,
+      this.state.currentLevel,
+      this.state.difficulty,
+      party,
+    )
+
+    for (const id of newAchievements) {
+      if (!this.state.achievements.includes(id)) {
+        this.state.achievements.push(id)
+        this.state.justUnlockedAchievements.push(id)
+      }
+    }
+  }
+
   save(): boolean {
     const save = this.toSaveGame()
     return SaveManager.save(0, save)
@@ -236,7 +275,7 @@ export class CampaignManager {
       })),
       currentLevel: this.state.currentLevel,
       gold: this.state.gold,
-      achievements: [],
+      achievements: this.state.achievements,
       stats: this.state.stats,
     }
   }

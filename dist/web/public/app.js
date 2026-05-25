@@ -39,16 +39,16 @@ const ABILITY_MAP = {
   lluvia_flechas: { name: 'Lluvia de Flechas', targetType: 'all_enemies', desc: 'Flechas a todos los enemigos', mp: 12 },
   disparo_penetrante: { name: 'Disparo Penetrante', targetType: 'single_enemy', desc: 'Ignora 60% defensa', mp: 10 },
   ojo_aguila: { name: 'Ojo de Águila', targetType: 'self', desc: 'Aumenta DEX 50% 3 turnos', mp: 5 },
-  // Berserker abilities
-  furia_sangrienta: { name: 'Furia Sangrienta', targetType: 'self', desc: 'Aumenta STR 80% 3 turnos, pierde 15% HP', mp: 5 },
-  golpe_ brutal: { name: 'Golpe Brutal', targetType: 'single_enemy', desc: 'Ataque devastador que consume HP', mp: 10 },
-  torbellino_mortal: { name: 'Torbellino Mortal', targetType: 'all_enemies', desc: 'Golpea a todos con furia', mp: 16 },
-  sacrificio_sangriento: { name: 'Sacrificio Sangriento', targetType: 'single_enemy', desc: 'Sacrifica 30% HP para daño masivo', mp: 0 },
-  // Druida abilities
-  curacion_naturaleza: { name: 'Curación Natural', targetType: 'single_ally', desc: 'Restaura 50% HP + 10% curación extra', mp: 12 },
-  escarcha_natural: { name: 'Escarcha Natural', targetType: 'single_enemy', desc: 'Hielo que congela y daña por turno', mp: 10 },
-  piel_roble: { name: 'Piel de Roble', targetType: 'self', desc: 'Aumenta DEF/RES 60% 3 turnos', mp: 8 },
-  invocar_lobo: { name: 'Invocar Lobo', targetType: 'self', desc: 'Invoca un lobo para que luche', mp: 20 },
+  // Berserker abilities (from src/data/abilities.ts)
+  furia: { name: 'Furia', targetType: 'self', desc: 'Aumenta STR 50% por 2 turnos', mp: 6 },
+  golpe_sangriento: { name: 'Golpe Sangriento', targetType: 'single_enemy', desc: 'Ataque 2.2x que consume 10% HP', mp: 4 },
+  tajo_salvaje: { name: 'Tajo Salvaje', targetType: 'all_enemies', desc: 'Golpea a todos los enemigos', mp: 14 },
+  berreo: { name: 'Berreo', targetType: 'self', desc: 'Aumenta ATQ del equipo 30% 3 turnos', mp: 10 },
+  // Druida abilities (from src/data/abilities.ts)
+  curacion_natural: { name: 'Curación Natural', targetType: 'single_ally', desc: 'Restaura 50% HP con poder natural', mp: 8 },
+  espinas: { name: 'Espinas', targetType: 'self', desc: 'Escudo que refleja 20% daño 3 turnos', mp: 8 },
+  invocar_lobo: { name: 'Invocar Lobo', targetType: 'self', desc: 'Invoca un lobo que lucha 4 turnos', mp: 15 },
+  tormenta: { name: 'Tormenta', targetType: 'all_enemies', desc: 'Tormenta eléctrica a todos los enemigos', mp: 14 },
 }
 
 const CHAR_ABILITIES = {
@@ -57,8 +57,8 @@ const CHAR_ABILITIES = {
   picaro: ['golpe_sombra','veneno','doble_golpe','evasion'],
   paladin: ['golpe_sagrado','escudo_protector','curacion_divina','barrera_luz'],
   arquero: ['disparo_preciso','lluvia_flechas','disparo_penetrante','ojo_aguila'],
-  berserker: ['furia_sangrienta','golpe_brutal','torbellino_mortal','sacrificio_sangriento'],
-  druida: ['curacion_naturaleza','escarcha_natural','piel_roble','invocar_lobo'],
+  berserker: ['furia','golpe_sangriento','tajo_salvaje','berreo'],
+  druida: ['curacion_natural','espinas','invocar_lobo','tormenta'],
 }
 
 const CHAR_STATS = {
@@ -67,8 +67,8 @@ const CHAR_STATS = {
   picaro: { hp: 85, mp: 45, str: 12, def: 7, int: 6, res: 6, spd: 18, dex: 14 },
   paladin: { hp: 110, mp: 50, str: 14, def: 14, int: 10, res: 14, spd: 6, dex: 7 },
   arquero: { hp: 75, mp: 40, str: 10, def: 6, int: 5, res: 7, spd: 14, dex: 20 },
-  berserker: { hp: 140, mp: 20, str: 24, def: 6, int: 2, res: 4, spd: 10, dex: 8 },
-  druida: { hp: 90, mp: 70, str: 6, def: 10, int: 16, res: 16, spd: 8, dex: 8 },
+  berserker: { hp: 90, mp: 20, str: 22, def: 8, int: 3, res: 5, spd: 12, dex: 10 },
+  druida: { hp: 90, mp: 65, str: 6, def: 8, int: 17, res: 12, spd: 9, dex: 7 },
 }
 
 let ws = null
@@ -779,6 +779,18 @@ function showResult(msg) {
     if (msg.levels > 0 && !msg.party) html += `<p>⬆ Nivel <strong>${msg.playerLevel}</strong> (${msg.levels} subidas)</p>`
     if (msg.playerXp !== undefined) html += `<p>📊 ${msg.playerXp} / ${msg.playerXpToNext} XP</p>`
     if (msg.goldReward) html += `<p>💰 Oro: <strong>+${msg.goldReward}</strong></p>`
+    if (msg.achievements && msg.achievements.length) {
+      html += '<p style="margin-top:16px">🏆 LOGROS:</p><div class="achievement-list">'
+      const achievementNames = {
+        first_blood: 'Primera Sangre', boss_slayer: 'Matarreyes', collector: 'Coleccionista',
+        max_level: 'Leyenda', nightmare: 'Pesadilla', crit_master: 'Crítico',
+        no_death: 'Invencible', damage_dealer: 'Coloso', healer: 'Sanador', survivor: 'Superviviente',
+      }
+      msg.achievements.forEach(id => {
+        html += `<div style="color:#ffd700;font-size:0.9em;margin:4px 0">✦ ${achievementNames[id] || id}</div>`
+      })
+      html += '</div>'
+    }
     if (msg.loot && msg.loot.length) {
       html += '<p style="margin-top:16px">🎁 BOTÍN:</p><div>'
       msg.loot.forEach((item, idx) => {

@@ -8,6 +8,7 @@ export interface CampaignState {
     difficulty: Difficulty;
     stats: GameStats;
     isComplete: boolean;
+    achievements: string[];
     justUnlockedAchievements: string[];
     partyTalents: Map<string, string[]>;
 }
@@ -32,6 +33,7 @@ export declare class CampaignManager {
     healParty(): void;
     getAvailableTalentsForLevel(char: Character): string[];
     applyTalent(char: Character, talentId: string): void;
+    checkAchievements(): void;
     save(): boolean;
     toSaveGame(): SaveGame;
 }

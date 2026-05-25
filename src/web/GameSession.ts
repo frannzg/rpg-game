@@ -243,6 +243,10 @@ export class GameSession {
         this.campaign.state.stats.battlesWon++
         this.campaign.state.stats.enemiesDefeated += defeated.length
 
+        this.campaign.checkAchievements()
+        const unlockedAchievements = [...this.campaign.state.justUnlockedAchievements]
+        this.campaign.state.justUnlockedAchievements = []
+
         if (this.campaign.state.currentLevel >= 20) {
           this.campaign.state.isComplete = true
           this.campaign.save()
@@ -260,11 +264,12 @@ export class GameSession {
             loot: loot.map(i => ({
               id: i.id, name: i.name, description: i.description,
               isEquippable: i.isEquippable(),
-               canEquip: (cName: string) => i.canEquip(cName as any),
+              canEquip: this.campaign!.state.party.some(c => i.canEquip(c.className)),
             })),
             goldReward,
             rounds: result.rounds,
             isComplete: true,
+            achievements: unlockedAchievements,
           })
           return
         }
@@ -284,13 +289,14 @@ export class GameSession {
             levelUp: levelUps.find(l => l.name === c.name) || null,
           })),
           loot: loot.map(i => ({
-            id: i.id, name: i.name, description: i.description,
-            isEquippable: i.isEquippable(),
-            canEquip: (cName: string) => i.canEquip(cName as any),
-          })),
-          goldReward,
-          rounds: result.rounds,
-          isComplete: false,
+              id: i.id, name: i.name, description: i.description,
+              isEquippable: i.isEquippable(),
+              canEquip: this.campaign!.state.party.some(c => i.canEquip(c.className)),
+            })),
+            goldReward,
+            rounds: result.rounds,
+            isComplete: false,
+            achievements: unlockedAchievements,
         })
       } else {
         this.campaign.state.stats.battlesLost++

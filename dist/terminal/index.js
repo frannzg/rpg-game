@@ -1,7 +1,6 @@
 import inquirer from 'inquirer';
 import pc from 'picocolors';
 import { createCharacterFromTemplate, getCharacterChoices, createAllCharacters } from '../models/classes/index.js';
-import { CombatSystem } from '../systems/CombatSystem.js';
 import { distributeXp } from '../systems/LevelSystem.js';
 import { generateLoot } from '../systems/LootSystem.js';
 import { CampaignManager } from '../systems/CampaignManager.js';
@@ -9,6 +8,7 @@ import { SaveManager } from '../systems/SaveManager.js';
 import { ShopSystem } from '../systems/ShopSystem.js';
 import { TerminalAdapter } from './TerminalAdapter.js';
 import { talents } from '../data/talents.js';
+import { ACHIEVEMENT_LIST } from '../systems/AchievementSystem.js';
 import { renderVictory, renderDefeat, renderLoot } from '../ui/renderer.js';
 import { BattleStatus, Difficulty } from '../types/index.js';
 function showTitle() {
@@ -294,7 +294,6 @@ async function playCampaign() {
         await sleep(500);
         const enemies = cm.getBattleEnemies();
         const allIds = cm.state.party.map(c => c.instanceId);
-        const combat = new CombatSystem(cm.state.party, enemies, allIds);
         const adapter = new TerminalAdapter(cm.state.party, enemies, allIds);
         const result = await adapter.getCombat().start();
         if (result.status === BattleStatus.VICTORY) {
@@ -311,8 +310,22 @@ async function playCampaign() {
                 char.currentStats.hp = char.currentStats.maxHp;
                 char.currentStats.mp = char.currentStats.maxMp;
             }
+            cm.state.stats.battlesWon++;
+            cm.state.stats.totalDamageDealt += adapter.getCombat().totalDamageDealt;
+            cm.state.stats.criticalHits += adapter.getCombat().criticalHits;
+            cm.state.stats.enemiesDefeated += defeated.length;
             cm.state.gold += levelData?.goldReward || 0;
             renderVictory(totalXp, levelMsgs);
+            cm.checkAchievements();
+            if (cm.state.justUnlockedAchievements.length > 0) {
+                console.log(pc.bold(pc.yellow('\n🏆 ¡LOGROS DESBLOQUEADOS!')));
+                for (const id of cm.state.justUnlockedAchievements) {
+                    const a = ACHIEVEMENT_LIST[id];
+                    if (a)
+                        console.log(`  ✦ ${pc.bold(pc.yellow(a.name))}: ${a.description}`);
+                }
+                cm.state.justUnlockedAchievements = [];
+            }
             if (loot.length > 0) {
                 renderLoot(loot.map(i => `${i.name} — ${i.description}`));
                 for (const item of loot) {

@@ -79,15 +79,13 @@ export class CombatSystem {
   }
 
   private getElementMultiplier(attackElement: Element, defender: Character): number {
+    const advantage = ELEMENT_ADVANTAGE[attackElement]
+    if (!advantage) return 1.0
     const defElement = defender.equippedArmor?.elementalResistance
-    if (defElement) {
-      for (const [elem] of Object.entries(defElement)) {
-        const advantage = ELEMENT_ADVANTAGE[attackElement]?.[elem as Element]
-        if (advantage) return advantage
-      }
-    }
-    for (const targetChar of [...this.allies, ...this.enemies]) {
-      if (targetChar.instanceId === defender.instanceId) continue
+    if (!defElement) return 1.0
+    for (const [elem] of Object.entries(defElement)) {
+      const mult = advantage[elem as Element]
+      if (mult) return mult
     }
     return 1.0
   }

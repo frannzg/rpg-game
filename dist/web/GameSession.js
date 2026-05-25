@@ -225,6 +225,9 @@ export class GameSession {
                 this.campaign.state.gold += goldReward;
                 this.campaign.state.stats.battlesWon++;
                 this.campaign.state.stats.enemiesDefeated += defeated.length;
+                this.campaign.checkAchievements();
+                const unlockedAchievements = [...this.campaign.state.justUnlockedAchievements];
+                this.campaign.state.justUnlockedAchievements = [];
                 if (this.campaign.state.currentLevel >= 20) {
                     this.campaign.state.isComplete = true;
                     this.campaign.save();
@@ -242,11 +245,12 @@ export class GameSession {
                         loot: loot.map(i => ({
                             id: i.id, name: i.name, description: i.description,
                             isEquippable: i.isEquippable(),
-                            canEquip: (cName) => i.canEquip(cName),
+                            canEquip: this.campaign.state.party.some(c => i.canEquip(c.className)),
                         })),
                         goldReward,
                         rounds: result.rounds,
                         isComplete: true,
+                        achievements: unlockedAchievements,
                     });
                     return;
                 }
@@ -266,11 +270,12 @@ export class GameSession {
                     loot: loot.map(i => ({
                         id: i.id, name: i.name, description: i.description,
                         isEquippable: i.isEquippable(),
-                        canEquip: (cName) => i.canEquip(cName),
+                        canEquip: this.campaign.state.party.some(c => i.canEquip(c.className)),
                     })),
                     goldReward,
                     rounds: result.rounds,
                     isComplete: false,
+                    achievements: unlockedAchievements,
                 });
             }
             else {

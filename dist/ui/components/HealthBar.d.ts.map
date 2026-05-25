@@ -1,1 +1,1 @@
-{"version":3,"file":"HealthBar.d.ts","sourceRoot":"","sources":["../../../src/ui/components/HealthBar.ts"],"names":[],"mappings":"AAIA,wBAAgB,eAAe,CAAC,OAAO,EAAE,MAAM,EAAE,GAAG,EAAE,MAAM,GAAG,MAAM,CASpE;AAED,wBAAgB,WAAW,CAAC,OAAO,EAAE,MAAM,EAAE,GAAG,EAAE,MAAM,GAAG,MAAM,CAOhE"}
+{"version":3,"file":"HealthBar.d.ts","sourceRoot":"","sources":["../../../src/ui/components/HealthBar.ts"],"names":[],"mappings":"AAKA,wBAAgB,eAAe,CAAC,OAAO,EAAE,MAAM,EAAE,GAAG,EAAE,MAAM,GAAG,MAAM,CASpE;AAED,wBAAgB,WAAW,CAAC,OAAO,EAAE,MAAM,EAAE,GAAG,EAAE,MAAM,GAAG,MAAM,CAOhE"}

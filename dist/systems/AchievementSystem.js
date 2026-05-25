@@ -11,17 +11,26 @@ export const ACHIEVEMENT_LIST = {
     survivor: { id: 'survivor', name: 'Superviviente', description: 'Completa la campaña completa' },
 };
 export class AchievementSystem {
-    static checkAll(stats, currentLevel, difficultiesCompleted) {
+    static checkAll(stats, unlocked, currentLevel, difficulty, party) {
         const newAchievements = [];
+        const checks = [
+            { id: 'first_blood', condition: () => stats.battlesWon >= 1 },
+            { id: 'boss_slayer', condition: () => stats.bossesDefeated >= 1 },
+            { id: 'collector', condition: () => party.some(c => c.inventory.length >= 10) },
+            { id: 'max_level', condition: () => party.some(c => c.level >= 20) },
+            { id: 'nightmare', condition: () => difficulty === 'nightmare' && currentLevel >= 20 },
+            { id: 'crit_master', condition: () => stats.criticalHits >= 100 },
+            { id: 'no_death', condition: () => stats.battlesLost === 0 && currentLevel >= 20 },
+            { id: 'damage_dealer', condition: () => stats.totalDamageDealt >= 10000 },
+            { id: 'healer', condition: () => stats.totalHealed >= 5000 },
+            { id: 'survivor', condition: () => currentLevel >= 20 },
+        ];
+        for (const { id, condition } of checks) {
+            if (!unlocked.includes(id) && condition()) {
+                newAchievements.push(id);
+            }
+        }
         return newAchievements;
-    }
-    static check(id, unlocked, stats) {
-        if (unlocked.includes(id))
-            return false;
-        const achievement = ACHIEVEMENT_LIST[id];
-        if (!achievement)
-            return false;
-        return true;
     }
 }
 //# sourceMappingURL=AchievementSystem.js.map
