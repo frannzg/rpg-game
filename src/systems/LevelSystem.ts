@@ -7,6 +7,7 @@ export function calculateXpForLevel(level: number): number {
 export function distributeXp(party: Character[], totalXp: number): Map<string, { gained: number; levels: number }> {
   const result = new Map<string, { gained: number; levels: number }>()
   const alive = party.filter(c => c.isAlive)
+  if (alive.length === 0) return result
   const xpPerChar = Math.round(totalXp / alive.length)
 
   for (const char of alive) {

@@ -12,7 +12,7 @@ import { TerminalAdapter } from './TerminalAdapter.js'
 import { talents } from '../data/talents.js'
 import { AchievementSystem, ACHIEVEMENT_LIST } from '../systems/AchievementSystem.js'
 import { renderVictory, renderDefeat, renderLoot } from '../ui/renderer.js'
-import { BattleStatus, Difficulty, NeedInputInfo, BattleState } from '../types/index.js'
+import { BattleStatus, Difficulty, NeedInputInfo, BattleState, RARITY_MULTIPLIER } from '../types/index.js'
 
 function showTitle(): void {
   console.clear()
@@ -32,7 +32,7 @@ function displayPartyStatus(party: Character[]): void {
   for (const char of party) {
     const s = char.getEffectiveStats()
     console.log(`${pc.bold(char.name)} — ${char.className} ${pc.bold(`Lv.${char.level}`)}`)
-    console.log(`  HP: ${char.currentStats.hp}/${char.currentStats.maxHp}  MP: ${char.currentStats.mp}/${char.currentStats.maxMp}`)
+    console.log(`  HP: ${char.currentStats.hp}/${s.maxHp}  MP: ${char.currentStats.mp}/${s.maxMp}`)
     console.log(`  STR:${s.str} DEF:${s.def} INT:${s.int} RES:${s.res} SPD:${s.spd} DEX:${s.dex}`)
     if (char.equippedWeapon) console.log(`  🗡 ${pc.gray(char.equippedWeapon.name)}`)
     if (char.equippedArmor) console.log(`  🛡 ${pc.gray(char.equippedArmor.name)}`)
@@ -336,13 +336,15 @@ async function playCampaign(): Promise<void> {
         if (entry && entry.levels > 0) {
           levelMsgs.push(`${char.name} subió ${entry.levels} nivel(es)! (Nv. ${char.level})`)
         }
-        char.currentStats.hp = char.currentStats.maxHp
-        char.currentStats.mp = char.currentStats.maxMp
+        const effective = char.getEffectiveStats()
+        char.currentStats.hp = effective.maxHp
+        char.currentStats.mp = effective.maxMp
       }
 
       cm.state.stats.battlesWon++
       cm.state.stats.totalDamageDealt += adapter.getCombat().totalDamageDealt
       cm.state.stats.criticalHits += adapter.getCombat().criticalHits
+      cm.state.stats.totalHealed += adapter.getCombat().totalHealed
       cm.state.stats.enemiesDefeated += defeated.length
       cm.state.gold += levelData?.goldReward || 0
       renderVictory(totalXp, levelMsgs)
@@ -466,8 +468,8 @@ async function runShop(cm: CampaignManager): Promise<void> {
       console.log(pc.gray('No hay items para vender.'))
     } else {
       const sellChoices = char.inventory.map((item, idx) => {
-        const mult = 0.3
-        const price = Math.round(item.price * mult)
+        const rarityMult = RARITY_MULTIPLIER[item.rarity] || 1
+        const price = Math.round(item.price * 0.3 * rarityMult)
         return { name: `${item.name} — ${price} oro`, value: idx }
       })
       sellChoices.push({ name: '← Volver', value: -1 })
@@ -479,7 +481,8 @@ async function runShop(cm: CampaignManager): Promise<void> {
       if (sellIdx >= 0) {
         const sold = char.removeFromInventory(sellIdx)
         if (sold) {
-          const price = Math.round(sold.price * 0.3)
+          const rarityMult = RARITY_MULTIPLIER[sold.rarity] || 1
+          const price = Math.round(sold.price * 0.3 * rarityMult)
           cm.state.gold += price
           console.log(pc.green(`💰 Vendiste ${sold.name} por ${price} oro!`))
         }

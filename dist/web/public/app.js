@@ -610,8 +610,7 @@ function renderBattleTeam(containerId, chars) {
       ? `<div class="status-effect">✦ ${c.statusEffects.join(' · ')}</div>` : ''
     const defText = c.isDefending ? ' <span class="defending">🛡 DEFENDIENDO</span>' : ''
 
-    const classKey = Object.entries(CLASS_MAP).find(([, v]) => v === c.className)?.[0] || ''
-    const emoji = CLASS_EMOJI[classKey] || (containerId === 'allies' ? '🧙' : '👹')
+    const emoji = CLASS_EMOJI[c.id] || (containerId === 'allies' ? '🧙' : '👹')
 
     el.innerHTML = `
       <div class="char-header">
@@ -727,6 +726,7 @@ function showItemSelection() {
 
 function showTargetSelection(team, partial) {
   const targets = team === 'enemies' ? currentNeedInput.aliveEnemies : currentNeedInput.aliveAllies
+  if (targets.length === 0) { submitDecision({ ...partial, targetId: currentNeedInput.charId }); return }
   const container = team === 'enemies' ? $('enemies') : $('allies')
 
   container.querySelectorAll('.battle-char').forEach(el => {

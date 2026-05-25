@@ -66,9 +66,9 @@ export class CombatSystem {
             className: char.className,
             level: char.level,
             hp: char.currentStats.hp,
-            maxHp: char.currentStats.maxHp,
+            maxHp: s.maxHp,
             mp: char.currentStats.mp,
-            maxMp: char.currentStats.maxMp,
+            maxMp: s.maxMp,
             str: s.str, def: s.def, int: s.int, res: s.res, spd: s.spd, dex: s.dex,
             isAlive: char.isAlive,
             isDefending: char.isDefending,
@@ -407,12 +407,14 @@ export class CombatSystem {
                 break;
             case BattleAction.ABILITY:
                 if (aiDecision.ability) {
-                    char.currentStats.mp -= aiDecision.ability.mpCost;
                     if (aiDecision.ability.targetType === TargetType.ALL_ENEMIES) {
-                        if (realEnemies.length > 0)
+                        if (realEnemies.length > 0) {
+                            char.currentStats.mp -= aiDecision.ability.mpCost;
                             this.executeAbility(char, realEnemies[0], aiDecision.ability);
+                        }
                     }
                     else if (target) {
+                        char.currentStats.mp -= aiDecision.ability.mpCost;
                         this.executeAbility(char, target, aiDecision.ability);
                     }
                 }

@@ -16,7 +16,7 @@ export class AchievementSystem {
         const checks = [
             { id: 'first_blood', condition: () => stats.battlesWon >= 1 },
             { id: 'boss_slayer', condition: () => stats.bossesDefeated >= 1 },
-            { id: 'collector', condition: () => party.some(c => c.inventory.length >= 10) },
+            { id: 'collector', condition: () => party.some(c => new Set(c.inventory).size >= 10) },
             { id: 'max_level', condition: () => party.some(c => c.level >= 20) },
             { id: 'nightmare', condition: () => difficulty === 'nightmare' && currentLevel >= 20 },
             { id: 'crit_master', condition: () => stats.criticalHits >= 100 },

@@ -95,8 +95,6 @@ export class Character {
                 this.elementalResistance[elem] = val;
             }
         }
-        s.maxHp = this.currentStats.maxHp;
-        s.maxMp = this.currentStats.maxMp;
         if (s.hp > s.maxHp)
             s.hp = s.maxHp;
         if (s.mp > s.maxMp)
@@ -137,12 +135,14 @@ export class Character {
     }
     heal(amount) {
         const before = this.currentStats.hp;
-        this.currentStats.hp = Math.min(this.currentStats.maxHp, this.currentStats.hp + amount);
+        const effectiveMaxHp = this.getEffectiveStats().maxHp;
+        this.currentStats.hp = Math.min(effectiveMaxHp, this.currentStats.hp + amount);
         return this.currentStats.hp - before;
     }
     restoreMp(amount) {
         const before = this.currentStats.mp;
-        this.currentStats.mp = Math.min(this.currentStats.maxMp, this.currentStats.mp + amount);
+        const effectiveMaxMp = this.getEffectiveStats().maxMp;
+        this.currentStats.mp = Math.min(effectiveMaxMp, this.currentStats.mp + amount);
         return this.currentStats.mp - before;
     }
     addStatusEffect(effect) {
@@ -185,14 +185,14 @@ export class Character {
         this.level++;
         this.xpToNext = Math.round(this.level * 100 + Math.pow(this.level - 1, 2) * 50);
         const growth = {
-            maxHp: Math.round(this.currentStats.maxHp * 0.08 + 3),
-            maxMp: Math.round(this.currentStats.maxMp * 0.06 + 2),
-            str: Math.round(this.currentStats.str * 0.05 + 1),
-            def: Math.round(this.currentStats.def * 0.05 + 1),
-            int: Math.round(this.currentStats.int * 0.05 + 1),
-            res: Math.round(this.currentStats.res * 0.05 + 1),
-            spd: Math.round(this.currentStats.spd * 0.04 + 1),
-            dex: Math.round(this.currentStats.dex * 0.04 + 1),
+            maxHp: Math.round(this.baseStats.maxHp * 0.08 + 3),
+            maxMp: Math.round(this.baseStats.maxMp * 0.06 + 2),
+            str: Math.round(this.baseStats.str * 0.05 + 1),
+            def: Math.round(this.baseStats.def * 0.05 + 1),
+            int: Math.round(this.baseStats.int * 0.05 + 1),
+            res: Math.round(this.baseStats.res * 0.05 + 1),
+            spd: Math.round(this.baseStats.spd * 0.04 + 1),
+            dex: Math.round(this.baseStats.dex * 0.04 + 1),
         };
         for (const [key, val] of Object.entries(growth)) {
             if (typeof val === 'number') {

@@ -4,6 +4,8 @@ export function calculateXpForLevel(level) {
 export function distributeXp(party, totalXp) {
     const result = new Map();
     const alive = party.filter(c => c.isAlive);
+    if (alive.length === 0)
+        return result;
     const xpPerChar = Math.round(totalXp / alive.length);
     for (const char of alive) {
         const prevLevel = char.level;

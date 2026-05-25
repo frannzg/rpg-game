@@ -42,7 +42,7 @@ export class CampaignManager {
             char.xpToNext = sc.xpToNext;
             char.baseStats = { ...sc.baseStats };
             char.currentStats = { ...sc.baseStats, hp: sc.hp, maxHp: sc.maxHp, mp: sc.mp, maxMp: sc.maxMp };
-            char.inventory = sc.inventory.map(id => new Item(itemDatabase[id])).filter(Boolean);
+            char.inventory = sc.inventory.map(id => itemDatabase[id] ? new Item(itemDatabase[id]) : null).filter(Boolean);
             char.talents = sc.talents || [];
             if (sc.equippedWeapon && itemDatabase[sc.equippedWeapon])
                 char.equippedWeapon = new Item(itemDatabase[sc.equippedWeapon]);
@@ -77,8 +77,12 @@ export class CampaignManager {
                 const char = createCharacterFromTemplate(group.templateId);
                 const scale = 1 + 0.12 * (this.state.currentLevel - 1);
                 for (const stat of Object.keys(char.baseStats)) {
-                    if (stat === 'maxHp' || stat === 'maxMp')
+                    if (stat === 'maxMp')
                         continue;
+                    if (stat === 'maxHp') {
+                        char.baseStats[stat] = Math.round(char.baseStats[stat] * scale * diffMult);
+                        continue;
+                    }
                     const val = char.baseStats[stat] || 0;
                     char.baseStats[stat] = Math.round(val * scale * diffMult);
                 }
@@ -110,6 +114,7 @@ export class CampaignManager {
         const result = await combat.start();
         this.state.stats.totalDamageDealt += combat.totalDamageDealt;
         this.state.stats.criticalHits += combat.criticalHits;
+        this.state.stats.totalHealed += combat.totalHealed;
         if (result.status === BattleStatus.VICTORY) {
             this.state.stats.battlesWon++;
             this.state.stats.enemiesDefeated += combat.enemiesDefeated || enemies.filter(e => !e.isAlive).length;
@@ -127,8 +132,9 @@ export class CampaignManager {
                 return { name: char.name, levels: entry.levels, newLevel: char.level };
             }).filter(Boolean);
             for (const char of this.state.party) {
-                char.currentStats.hp = char.currentStats.maxHp;
-                char.currentStats.mp = char.currentStats.maxMp;
+                const effective = char.getEffectiveStats();
+                char.currentStats.hp = effective.maxHp;
+                char.currentStats.mp = effective.maxMp;
             }
             const goldReward = this.getLevelData()?.goldReward || 0;
             this.state.gold += goldReward;
@@ -153,8 +159,9 @@ export class CampaignManager {
     }
     healParty() {
         for (const char of this.state.party) {
-            char.currentStats.hp = char.currentStats.maxHp;
-            char.currentStats.mp = char.currentStats.maxMp;
+            const effective = char.getEffectiveStats();
+            char.currentStats.hp = effective.maxHp;
+            char.currentStats.mp = effective.maxMp;
         }
     }
     getAvailableTalentsForLevel(char) {

@@ -63,7 +63,7 @@ export class CampaignManager {
       char.xpToNext = sc.xpToNext
       char.baseStats = { ...sc.baseStats }
       char.currentStats = { ...sc.baseStats, hp: sc.hp, maxHp: sc.maxHp, mp: sc.mp, maxMp: sc.maxMp }
-      char.inventory = sc.inventory.map(id => new Item(itemDatabase[id])).filter(Boolean)
+      char.inventory = sc.inventory.map(id => itemDatabase[id] ? new Item(itemDatabase[id]) : null).filter(Boolean) as Item[]
       char.talents = sc.talents || []
       if (sc.equippedWeapon && itemDatabase[sc.equippedWeapon]) char.equippedWeapon = new Item(itemDatabase[sc.equippedWeapon])
       if (sc.equippedArmor && itemDatabase[sc.equippedArmor]) char.equippedArmor = new Item(itemDatabase[sc.equippedArmor])
@@ -100,7 +100,11 @@ export class CampaignManager {
         const char = createCharacterFromTemplate(group.templateId)
         const scale = 1 + 0.12 * (this.state.currentLevel - 1)
         for (const stat of Object.keys(char.baseStats) as (keyof Stats)[]) {
-          if (stat === 'maxHp' || stat === 'maxMp') continue
+          if (stat === 'maxMp') continue
+          if (stat === 'maxHp') {
+            (char.baseStats as any)[stat] = Math.round((char.baseStats as any)[stat] * scale * diffMult)
+            continue
+          }
           const val = (char.baseStats as any)[stat] || 0
           ;(char.baseStats as any)[stat] = Math.round(val * scale * diffMult)
         }
@@ -141,6 +145,7 @@ export class CampaignManager {
 
     this.state.stats.totalDamageDealt += combat.totalDamageDealt
     this.state.stats.criticalHits += combat.criticalHits
+    this.state.stats.totalHealed += combat.totalHealed
 
     if (result.status === BattleStatus.VICTORY) {
       this.state.stats.battlesWon++
@@ -160,8 +165,9 @@ export class CampaignManager {
       }).filter(Boolean) as { name: string; levels: number; newLevel: number }[]
 
       for (const char of this.state.party) {
-        char.currentStats.hp = char.currentStats.maxHp
-        char.currentStats.mp = char.currentStats.maxMp
+        const effective = char.getEffectiveStats()
+        char.currentStats.hp = effective.maxHp
+        char.currentStats.mp = effective.maxMp
       }
 
       const goldReward = this.getLevelData()?.goldReward || 0
@@ -189,8 +195,9 @@ export class CampaignManager {
 
   healParty(): void {
     for (const char of this.state.party) {
-      char.currentStats.hp = char.currentStats.maxHp
-      char.currentStats.mp = char.currentStats.maxMp
+      const effective = char.getEffectiveStats()
+      char.currentStats.hp = effective.maxHp
+      char.currentStats.mp = effective.maxMp
     }
   }
 

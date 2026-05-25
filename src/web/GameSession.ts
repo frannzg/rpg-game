@@ -107,6 +107,9 @@ export class GameSession {
       case 'request_campaign_hub':
         this.sendCampaignHub()
         break
+      case 'check_save':
+        this.send({ type: 'save_status', exists: SaveManager.load(0) !== null })
+        break
       case 'delete_campaign':
         SaveManager.delete(0)
         SaveManager.delete(1)
@@ -130,9 +133,9 @@ export class GameSession {
         xp: c.xp,
         xpToNext: c.xpToNext,
         hp: c.currentStats.hp,
-        maxHp: c.currentStats.maxHp,
+        maxHp: c.getEffectiveStats().maxHp,
         mp: c.currentStats.mp,
-        maxMp: c.currentStats.maxMp,
+        maxMp: c.getEffectiveStats().maxMp,
         str: c.getEffectiveStats().str,
         def: c.getEffectiveStats().def,
         int: c.getEffectiveStats().int,
@@ -163,6 +166,22 @@ export class GameSession {
         talents: cm.getAvailableTalentsForLevel(char),
       })).filter(t => t.talents.length > 0),
     })
+
+    const firstTalent = cm.state.party
+      .map((char, idx) => ({ charIndex: idx, char, talentIds: cm.getAvailableTalentsForLevel(char) }))
+      .find(t => t.talentIds.length > 0)
+    if (firstTalent) {
+      this.send({
+        type: 'talent_options',
+        charIndex: firstTalent.charIndex,
+        charName: firstTalent.char.name,
+        talents: firstTalent.talentIds.map(id => ({
+          id,
+          name: talents[id]?.name || id,
+          description: talents[id]?.description || '',
+        })),
+      })
+    }
   }
 
   private async startCampaign(party: string[], names: string[], difficulty: string): Promise<void> {
@@ -234,16 +253,22 @@ export class GameSession {
         }).filter(l => l.gained)
 
         for (const char of this.campaign.state.party) {
-          char.currentStats.hp = char.currentStats.maxHp
-          char.currentStats.mp = char.currentStats.maxMp
+          const effective = char.getEffectiveStats()
+          char.currentStats.hp = effective.maxHp
+          char.currentStats.mp = effective.maxMp
         }
 
         const goldReward = this.campaign.getLevelData()?.goldReward || 0
         this.campaign.state.gold += goldReward
-        this.campaign.state.stats.battlesWon++
-        this.campaign.state.stats.enemiesDefeated += defeated.length
+    this.campaign.state.stats.battlesWon++
+    this.campaign.state.stats.enemiesDefeated += defeated.length
+    this.campaign.state.stats.totalDamageDealt += this.combat.totalDamageDealt
+    this.campaign.state.stats.criticalHits += this.combat.criticalHits
+    this.campaign.state.stats.totalHealed += this.combat.totalHealed
+    const hasBoss = this.campaign.getLevelData()?.enemyGroups.some(g => g.isBoss)
+    if (hasBoss) this.campaign.state.stats.bossesDefeated++
 
-        this.campaign.checkAchievements()
+    this.campaign.checkAchievements()
         const unlockedAchievements = [...this.campaign.state.justUnlockedAchievements]
         this.campaign.state.justUnlockedAchievements = []
 
@@ -337,7 +362,7 @@ export class GameSession {
         sellPrice: si.sellPrice,
         isEquippable: si.item.isEquippable(),
         type: si.item.type,
-        forClasses: (si.item as any).allowedClasses || [],
+        forClasses: si.item.classRestriction || [],
       })),
       gold: this.campaign.state.gold,
       party: this.campaign.state.party.map((c, idx) => ({
@@ -353,6 +378,7 @@ export class GameSession {
 
   private buyItem(shopIndex: number, charIndex: number): void {
     if (!this.campaign || shopIndex < 0 || shopIndex >= this.shopItems.length) return
+    if (isNaN(charIndex) || charIndex < 0 || charIndex >= this.campaign.state.party.length) return
     const item = this.shopItems[shopIndex]
     if (this.campaign.state.gold < item.buyPrice) {
       this.send({ type: 'shop_error', message: 'No tienes suficiente oro' })
@@ -373,7 +399,8 @@ export class GameSession {
     const char = this.campaign.state.party[charIndex]
     const item = char.inventory[invIndex]
     if (!item) return
-    const price = Math.round(item.price * 0.3 * (1 + (this.campaign.state.currentLevel * 0.05)))
+    const rarityMult = RARITY_MULTIPLIER[item.rarity] || 1
+    const price = Math.round(item.price * 0.3 * rarityMult)
     char.removeFromInventory(invIndex)
     this.campaign.state.gold += price
     this.send({
