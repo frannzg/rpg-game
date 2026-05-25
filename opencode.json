@@ -1,0 +1,34 @@
+{
+  "agents": {
+    "rpg-terminal": {
+      "description": "Experto en el proyecto Ragnarok Terminal RPG. Conoce toda la arquitectura, sistemas, datos y convenciones del juego.",
+      "file": ".opencode/agents/rpg-terminal.md"
+    }
+  },
+  "skills": {
+    "build-project": {
+      "description": "Compilar el proyecto TypeScript y preparar assets para producción",
+      "file": ".opencode/skills/build-project.md"
+    },
+    "run-terminal": {
+      "description": "Ejecutar el juego en modo terminal con menús interactivos",
+      "file": ".opencode/skills/run-terminal.md"
+    },
+    "run-web": {
+      "description": "Ejecutar el servidor web y abrir el juego en el navegador",
+      "file": ".opencode/skills/run-web.md"
+    },
+    "add-character-class": {
+      "description": "Añadir una nueva clase de personaje jugable al juego",
+      "file": ".opencode/skills/add-character-class.md"
+    },
+    "add-ability": {
+      "description": "Añadir una nueva habilidad para una clase existente o nueva",
+      "file": ".opencode/skills/add-ability.md"
+    },
+    "add-item": {
+      "description": "Añadir un nuevo item (arma, armadura o consumible) al juego",
+      "file": ".opencode/skills/add-item.md"
+    }
+  }
+}
